@@ -15,7 +15,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mistral-7b
+  name: llm-service-latest
 spec:
   selector:
     matchLabels:
@@ -26,10 +26,11 @@ spec:
         app.kubernetes.io/name: llm-service-latest
     spec:
       imagePullSecrets:
-        - name: your-secret
+        - name: my-registry-secret
       containers:
         - name: llm-service-latest
-          image: "your.registry/llm-service-latest:latest"
+          image: "felixschamoni1/llm:llm-service-latest"
+          imagePullPolicy: Always
           ports:
             - name: https
               containerPort: 8000
@@ -37,13 +38,15 @@ spec:
           resources:
             limits:
               cpu: 1
-              memory: 15G
+              memory: 3.5G
             requests:
               cpu: 1
-              memory: 10G
+              memory: 3.5G
           env:
             - name: PYTHONUNBUFFERED
               value: "1"
+            - name: LLM_MODEL
+              value: "EleutherAI/pythia-70m-deduped"
 ---
 apiVersion: gateway.kyma-project.io/v1beta1
 kind: APIRule
@@ -58,9 +61,8 @@ spec:
   rules:
     - path: /.*
       accessStrategies:
-        - handler: oauth2_introspection
-          config:
-            required_scope: ["llm"]
+        - handler: allow
+          config: { }
       methods:
         - GET
         - POST
